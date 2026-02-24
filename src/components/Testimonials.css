@@ -1,0 +1,80 @@
+/* Testimonials.css — Global Quantum Solutions */
+
+.testimonials-section {
+    position: relative;
+    z-index: 10;
+    background: linear-gradient(to bottom,
+            transparent 0%,
+            rgba(124, 58, 237, 0.05) 35%,
+            rgba(0, 212, 255, 0.03) 70%,
+            transparent 100%);
+}
+
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.75rem;
+}
+
+.testimonial-card {
+    padding: 2.25rem;
+    display: flex;
+    flex-direction: column;
+    transition: var(--transition);
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    border-color: rgba(124, 58, 237, 0.2);
+}
+
+.stars {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.quote {
+    font-size: 0.97rem;
+    line-height: 1.75;
+    color: var(--text-primary);
+    opacity: 0.9;
+    margin-bottom: 1.75rem;
+    flex-grow: 1;
+    font-style: italic;
+}
+
+.author-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    padding-top: 1.5rem;
+}
+
+.author-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 2px rgba(0, 212, 255, 0.25);
+    transition: box-shadow 0.3s ease;
+}
+
+.testimonial-card:hover .author-avatar {
+    box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.6), 0 0 14px rgba(124, 58, 237, 0.3);
+}
+
+.author-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.author-role {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+    line-height: 1.4;
+}

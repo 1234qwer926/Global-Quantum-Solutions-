@@ -1,0 +1,100 @@
+/* CTA.css — Global Quantum Solutions */
+
+.cta-section {
+    padding-bottom: 8rem;
+}
+
+.cta-box {
+    position: relative;
+    padding: 5rem 3rem;
+    text-align: center;
+    overflow: hidden;
+    border-radius: var(--border-radius-xl);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    background: rgba(6, 13, 31, 0.92);
+}
+
+/* Radial glow layers */
+.cta-box::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle,
+            rgba(0, 212, 255, 0.1) 0%,
+            rgba(124, 58, 237, 0.08) 45%,
+            transparent 70%);
+    border-radius: 50%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.cta-box::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(135deg, rgba(0, 212, 255, 0.04) 0%, transparent 50%),
+        linear-gradient(315deg, rgba(124, 58, 237, 0.04) 0%, transparent 50%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+.cta-content {
+    position: relative;
+    z-index: 2;
+    max-width: 680px;
+    margin: 0 auto;
+}
+
+.cta-title {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1.1;
+    margin: 1rem 0 1.5rem;
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.cta-description {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+}
+
+.cta-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.cta-footnote {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+}
+
+@media (max-width: 768px) {
+    .cta-title {
+        font-size: 2.2rem;
+    }
+
+    .cta-box {
+        padding: 4rem 1.5rem;
+    }
+
+    .cta-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+}
