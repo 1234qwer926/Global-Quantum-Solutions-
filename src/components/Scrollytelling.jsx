@@ -1,113 +1,92 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, useScroll, useTransform, useMotionValueEvent } from 'framer-motion';
 import './Scrollytelling.css';
 
 const FRAME_COUNT = 80;
+const images = [];
+
+// Preload all frames immediately (module-level, once)
+for (let i = 0; i < FRAME_COUNT; i++) {
+    const img = new Image();
+    img.src = `/quantum_000/quantum_${String(i).padStart(3, '0')}.jpg`;
+    images.push(img);
+}
 
 const Scrollytelling = () => {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
-    const [images, setImages] = useState([]);
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
-        offset: ['start start', 'end end']
+        offset: ['start start', 'end end'],
     });
 
     const frameIndex = useTransform(scrollYProgress, [0, 1], [0, FRAME_COUNT - 1]);
 
-    useEffect(() => {
-        const loadedImages = [];
-        for (let i = 0; i < FRAME_COUNT; i++) {
-            const img = new Image();
-            const frameNum = i.toString().padStart(3, '0');
-            img.src = `/quantum_000/quantum_${frameNum}.jpg`;
-            loadedImages.push(img);
-        }
-        setImages(loadedImages);
-    }, []);
-
+    // Draw the correct frame whenever scroll changes
     useMotionValueEvent(frameIndex, 'change', (latest) => {
-        if (images.length === 0 || !canvasRef.current) return;
-        const index = Math.round(latest);
-        if (!images[index] || !images[index].complete) return;
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        if (canvas.width !== images[index].naturalWidth) {
-            canvas.width = images[index].naturalWidth;
-            canvas.height = images[index].naturalHeight;
-        }
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(images[index], 0, 0);
+        drawFrame(Math.round(latest));
     });
 
+    function drawFrame(index) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const img = images[index];
+        if (!img?.complete || !img.naturalWidth) return;
+
+        const ctx = canvas.getContext('2d');
+        // Fit canvas to viewport maintaining image aspect ratio
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const imgW = img.naturalWidth;
+        const imgH = img.naturalHeight;
+        const scale = Math.min(vw / imgW, vh / imgH);
+        canvas.width = imgW * scale;
+        canvas.height = imgH * scale;
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    }
+
+    // Draw frame 0 once images are ready
     useEffect(() => {
-        if (images.length > 0) {
-            const first = images[0];
-            const draw = () => {
-                const canvas = canvasRef.current;
-                if (canvas) {
-                    const ctx = canvas.getContext('2d');
-                    canvas.width = first.naturalWidth;
-                    canvas.height = first.naturalHeight;
-                    ctx.drawImage(first, 0, 0);
-                }
-            };
-            if (first.complete) draw();
-            else first.onload = draw;
+        const first = images[0];
+        if (first.complete) {
+            drawFrame(0);
+        } else {
+            first.onload = () => drawFrame(0);
         }
-    }, [images]);
+    }, []);
 
-    // Text section timing
-    const op1 = useTransform(scrollYProgress, [0, 0.05, 0.20, 0.25], [0, 1, 1, 0]);
-    const y1 = useTransform(scrollYProgress, [0, 0.25], [60, -60]);
+    // Text section timings (progress ranges for fade in/stay/fade out)
+    const op1 = useTransform(scrollYProgress, [0.00, 0.06, 0.22, 0.28], [0, 1, 1, 0]);
+    const op2 = useTransform(scrollYProgress, [0.32, 0.38, 0.54, 0.60], [0, 1, 1, 0]);
+    const op3 = useTransform(scrollYProgress, [0.66, 0.72, 0.88, 0.94], [0, 1, 1, 0]);
 
-    const op2 = useTransform(scrollYProgress, [0.30, 0.35, 0.50, 0.55], [0, 1, 1, 0]);
-    const y2 = useTransform(scrollYProgress, [0.30, 0.55], [60, -60]);
-
-    const op3 = useTransform(scrollYProgress, [0.65, 0.70, 0.85, 0.90], [0, 1, 1, 0]);
-    const y3 = useTransform(scrollYProgress, [0.65, 0.90], [60, -60]);
+    const sections = [
+        { opacity: op1, num: '01', label: 'HARDWARE', heading: 'Engineered for the Quantum Era.' },
+        { opacity: op2, num: '02', label: 'PERFORMANCE', heading: 'Infinite Compute. Zero Compromise.' },
+        { opacity: op3, num: '03', label: 'INFRASTRUCTURE', heading: 'Your Infrastructure. Reimagined.' },
+    ];
 
     return (
         <div ref={containerRef} className="scrollytelling-container">
             <div className="scrollytelling-sticky">
+                {/* Full-bleed canvas — animation takes the whole screen */}
                 <canvas ref={canvasRef} className="scrollytelling-canvas" />
 
-                {/* Section 1 */}
-                <motion.div className="scrollytelling-text" style={{ opacity: op1, y: y1 }}>
-                    <div className="st-label text-mono">01 — HARDWARE</div>
-                    <h2 className="scrollytelling-heading">
-                        Engineered for the<br /><span className="scrollytelling-accent">Quantum Era.</span>
-                    </h2>
-                    <p className="scrollytelling-paragraph">
-                        Built from the ground up for quantum workloads.
-                        Every component designed to operate at the edge of physical possibility.
-                    </p>
-                </motion.div>
-
-                {/* Section 2 */}
-                <motion.div className="scrollytelling-text" style={{ opacity: op2, y: y2 }}>
-                    <div className="st-label text-mono">02 — PERFORMANCE</div>
-                    <h2 className="scrollytelling-heading">
-                        Infinite Compute.<br /><span className="scrollytelling-accent">Zero Compromise.</span>
-                    </h2>
-                    <p className="scrollytelling-paragraph">
-                        Petaflop-class processing with sub-millisecond latency.
-                        Your most demanding workloads, solved in seconds.
-                    </p>
-                </motion.div>
-
-                {/* Section 3 */}
-                <motion.div className="scrollytelling-text" style={{ opacity: op3, y: y3 }}>
-                    <div className="st-label text-mono">03 — INFRASTRUCTURE</div>
-                    <h2 className="scrollytelling-heading">
-                        Your Infrastructure.<br /><span className="scrollytelling-accent">Reimagined.</span>
-                    </h2>
-                    <p className="scrollytelling-paragraph">
-                        Deploy globally in minutes. Our edge network puts
-                        quantum compute exactly where your business needs it.
-                    </p>
-                </motion.div>
+                {/* Slim bottom-strip text — one line, minimal overlap */}
+                {sections.map((s, i) => (
+                    <motion.div
+                        key={i}
+                        className="st-strip"
+                        style={{ opacity: s.opacity }}
+                        aria-hidden={i !== 0}
+                    >
+                        <span className="st-num">{s.num}</span>
+                        <span className="st-divider" />
+                        <span className="st-label">{s.label}</span>
+                        <span className="st-heading">{s.heading}</span>
+                    </motion.div>
+                ))}
             </div>
         </div>
     );

@@ -4,25 +4,28 @@ import './index.css'
 import App from './App.jsx'
 import Lenis from 'lenis'
 
-// Initialize Lenis smooth scroll
-const lenis = new Lenis({
-  duration: 1.2,
-  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Expo ease-out
-  smoothWheel: true,
-  wheelMultiplier: 0.9,
-  touchMultiplier: 1.5,
-  infinite: false,
-});
+// Only enable Lenis on non-touch devices.
+// On mobile, Lenis's JS scroll overrides the browser's native scroll engine,
+// which breaks position:sticky used by the Scrollytelling canvas section.
+const isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 
-// Expose to window so Framer Motion / other components can sync if needed
-window.__lenis = lenis;
+if (!isTouchDevice) {
+  const lenis = new Lenis({
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true,
+    wheelMultiplier: 0.9,
+    infinite: false,
+  });
 
-// Pull Lenis into the native requestAnimationFrame loop
-function raf(time) {
-  lenis.raf(time);
+  window.__lenis = lenis;
+
+  function raf(time) {
+    lenis.raf(time);
+    requestAnimationFrame(raf);
+  }
   requestAnimationFrame(raf);
 }
-requestAnimationFrame(raf);
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
