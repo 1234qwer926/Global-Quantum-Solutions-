@@ -5,7 +5,7 @@ import './Scrollytelling.css';
 const FRAME_COUNT = 80;
 const images = [];
 
-// Preload all frames immediately (module-level, once)
+// Preload all frames at module level (once)
 for (let i = 0; i < FRAME_COUNT; i++) {
     const img = new Image();
     img.src = `/quantum_000/quantum_${String(i).padStart(3, '0')}.jpg`;
@@ -23,11 +23,11 @@ const Scrollytelling = () => {
 
     const frameIndex = useTransform(scrollYProgress, [0, 1], [0, FRAME_COUNT - 1]);
 
-    // Draw the correct frame whenever scroll changes
     useMotionValueEvent(frameIndex, 'change', (latest) => {
         drawFrame(Math.round(latest));
     });
 
+    // Draw with object-fit: cover — crops edges, no black bars
     function drawFrame(index) {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -35,28 +35,56 @@ const Scrollytelling = () => {
         if (!img?.complete || !img.naturalWidth) return;
 
         const ctx = canvas.getContext('2d');
-        // Fit canvas to viewport maintaining image aspect ratio
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+
+        // Canvas always equals viewport
+        if (canvas.width !== vw || canvas.height !== vh) {
+            canvas.width = vw;
+            canvas.height = vh;
+        }
+
         const imgW = img.naturalWidth;
         const imgH = img.naturalHeight;
-        const scale = Math.min(vw / imgW, vh / imgH);
-        canvas.width = imgW * scale;
-        canvas.height = imgH * scale;
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const imgAspect = imgW / imgH;
+        const vpAspect = vw / vh;
+
+        let sx, sy, sw, sh;
+        if (imgAspect > vpAspect) {
+            // Image wider than viewport → crop left/right
+            sh = imgH;
+            sw = imgH * vpAspect;
+            sx = (imgW - sw) / 2;
+            sy = 0;
+        } else {
+            // Image taller than viewport → crop top/bottom
+            sw = imgW;
+            sh = imgW / vpAspect;
+            sx = 0;
+            sy = (imgH - sh) / 2;
+        }
+
+        ctx.drawImage(img, sx, sy, sw, sh, 0, 0, vw, vh);
     }
 
-    // Draw frame 0 once images are ready
+    // Draw frame 0 on mount
     useEffect(() => {
+        const setInitialFrame = () => drawFrame(0);
         const first = images[0];
-        if (first.complete) {
-            drawFrame(0);
+        if (first.complete && first.naturalWidth) {
+            setInitialFrame();
         } else {
-            first.onload = () => drawFrame(0);
+            first.onload = setInitialFrame;
         }
+
+        // Redraw on resize so the cover crop stays correct
+        window.addEventListener('resize', () => {
+            const current = Math.round(frameIndex.get());
+            drawFrame(current);
+        });
     }, []);
 
-    // Text section timings (progress ranges for fade in/stay/fade out)
+    // Text sections timing
     const op1 = useTransform(scrollYProgress, [0.00, 0.06, 0.22, 0.28], [0, 1, 1, 0]);
     const op2 = useTransform(scrollYProgress, [0.32, 0.38, 0.54, 0.60], [0, 1, 1, 0]);
     const op3 = useTransform(scrollYProgress, [0.66, 0.72, 0.88, 0.94], [0, 1, 1, 0]);
@@ -70,17 +98,10 @@ const Scrollytelling = () => {
     return (
         <div ref={containerRef} className="scrollytelling-container">
             <div className="scrollytelling-sticky">
-                {/* Full-bleed canvas — animation takes the whole screen */}
                 <canvas ref={canvasRef} className="scrollytelling-canvas" />
 
-                {/* Slim bottom-strip text — one line, minimal overlap */}
                 {sections.map((s, i) => (
-                    <motion.div
-                        key={i}
-                        className="st-strip"
-                        style={{ opacity: s.opacity }}
-                        aria-hidden={i !== 0}
-                    >
+                    <motion.div key={i} className="st-strip" style={{ opacity: s.opacity }}>
                         <span className="st-num">{s.num}</span>
                         <span className="st-divider" />
                         <span className="st-label">{s.label}</span>
